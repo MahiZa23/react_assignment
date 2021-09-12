@@ -1,72 +1,64 @@
-
-import './App.css';
-import Header from "./MyComponents/Header";
-import { Todos } from "./MyComponents/Todos";
-import { AddTodo } from "./MyComponents/AddTodo";
-import { Footer } from "./MyComponents/Footer";
 import React, { useState, useEffect } from 'react';
-// import {
-//   BrowserRouter as Router,
-//   Switch,
-//   Route,
-//   Link
-// } from "react-router-dom";
+import './App.css';
+import MaterialTable from 'material-table';
 
 function App() {
-  let initTodo;
-  if (localStorage.getItem("todos") === null) {
-    initTodo = [];
-  }
-  else {
-    initTodo = JSON.parse(localStorage.getItem("todos"));
-  }
-  const onDelete = (todo) => {
-    console.log("I am onDelete", todo);
-    // let  index = todos.indexOf(todo);      //Deleting this way in react does not work
-    // todos.splice(index,1);
+  const [tableData, setTableData] = useState([])
 
-    setTodos(todos.filter((e) => {
-      return e !== todo;
-    }));
-    localStorage.setItem("todos", JSON.stringify(todos));
-  }
+  const columns = [
+    { title: "Name", field: "name", sorting: false, filtering: false },
+    { title: "Username", field: "username", sorting: false, filtering: false },
+    { title: "Email", field: "email", filterPlaceholder: "Filter by email" },
+    { title: "Phone Number", field: "phone", align: "center", filtering: false },
+    { title: "Website", field: "website", sorting: false, filtering: false },
+  ]
 
-  const addTodo = (title, desc) => {
-    console.log("I am adding this todo", title, desc)
-    let sno;
-    if (todos.length === 0) {
-      sno = 0;
-    }
-    else {
-      sno = todos[todos.length - 1].sno + 1;
-    }
-    const myTodo = {
-      email: "test@gmail.com",
-      first_name: "test",
-      last_name: "user",
-      pwd: "1234",
-      username: "test user"
-    }
-    setTodos([todos, myTodo]);
-    console.log(myTodo);
-
-    // localStorage.setItem("todos", JSON.stringify(todos));
-
-  }
-
-  const [todos, setTodos] = useState(initTodo);
-  //whenever i want to add a new todo this useeffect gets called and saves the new todo to our local storage
   useEffect(() => {
-    localStorage.setItem("todos", JSON.stringify(todos));
-  }, [todos])
+    fetch("https://jsonplaceholder.typicode.com/users")
+      .then(resp => resp.json())
+      .then(resp => {
+        console.log("Response from json", resp)
+        setTableData(resp)
+      })
+  }, [])
 
   return (
-    <>
-      <Header title="My Todos List" searchBar={false} />
-      <AddTodo addTodo={addTodo} />
-      <Todos todos={todos} onDelete={onDelete} />
-      <Footer />
-    </>
+
+    <div className="App">
+      <h1 align="center">React Website</h1>
+      <h4 align="center">Material Table</h4>
+
+      <MaterialTable columns={columns} data={tableData}
+        editable={{
+          onRowAdd: (newRow) => new Promise((resolve, reject) => {
+            console.log(newRow)
+            setTableData([...tableData, newRow])
+            setTimeout(() => resolve(), 500)
+          }),
+          onRowUpdate: (newRow, oldRow) => new Promise((resolve, reject) => {
+            const updatedData = [...tableData]
+            updatedData[oldRow.tableData.id] = newRow
+            setTableData(updatedData)
+            setTimeout(() => resolve(), 500)
+          }),
+          onRowDelete: (selectedRow) => new Promise((resolve, reject) => {
+            const updatedData = [...tableData]
+            updatedData.splice(selectedRow.tableData.id, 1)
+            setTableData(updatedData)
+            setTimeout(() => resolve())
+          })
+        }}
+
+        options={{
+          sorting: true, search: true,
+          searchFieldAlignment: "right", searchAutoFocus: true, searchFieldVariant: "standard",
+          filtering: true, paging: true, pageSizeOptions: [2, 5, 10, 15, 20], pageSize: 2, paginationType: "stepped",
+          showFirstLastPageButtons: false, paginationPosition: "bottom", exportButton: true, exportAllData: true,
+          exportFileName: "TableData", addRowPosition: "first", actionsColumnIndex: -1
+        }}
+        title="Student Information" />
+
+    </div>
   );
 }
 
